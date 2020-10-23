@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import lombok.Data;
 import org.springframework.data.redis.core.RedisTemplate;
 import tech.guyi.web.quick.permission.authorization.AuthorizationInfo;
-import tech.guyi.web.quick.permission.authorization.configuration.AuthorizationConfiguration;
 import tech.guyi.web.quick.permission.authorization.memory.AuthorizationInfoMemory;
+import tech.guyi.web.quick.permission.configuration.PermissionConfiguration;
 
 import javax.annotation.Resource;
 import java.util.Optional;
@@ -25,7 +25,7 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
     @Resource
     private RedisTemplate<String,String> template;
     @Resource
-    private AuthorizationConfiguration configuration;
+    private PermissionConfiguration configuration;
 
     private String getKey(String key){
         return "Authorization/" + key;
@@ -51,7 +51,7 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
         entry.setClasses(authorization.getClass().getName());
         entry.setJson(gson.toJson(authorization));
         this.template.opsForValue()
-                .set(key,gson.toJson(entry), configuration.getTimeout(), TimeUnit.MILLISECONDS);
+                .set(key,gson.toJson(entry), configuration.getAuthorization().getTimeout(), TimeUnit.MILLISECONDS);
         return key;
     }
 
@@ -77,7 +77,7 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
 
     @Override
     public String renew(String key) {
-        this.template.expire(getKey(key),configuration.getTimeout(), TimeUnit.MILLISECONDS);
+        this.template.expire(getKey(key),configuration.getAuthorization().getTimeout(), TimeUnit.MILLISECONDS);
         return key;
     }
 }
