@@ -27,6 +27,10 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
     @Resource
     private AuthorizationConfiguration configuration;
 
+    private String getKey(String key){
+        return "Authorization/" + key;
+    }
+
     @Override
     public String forType() {
         return "redis";
@@ -35,6 +39,7 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
     @Override
     public boolean contains(String key) {
         return Optional.ofNullable(key)
+                .map(this::getKey)
                 .map(template::hasKey)
                 .orElse(false);
     }
@@ -51,8 +56,13 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
     }
 
     @Override
+    public void remove(String key) {
+        this.template.delete(getKey(key));
+    }
+
+    @Override
     public Optional<AuthorizationInfo> get(String key) {
-        return Optional.ofNullable(this.template.opsForValue().get(key))
+        return Optional.ofNullable(this.template.opsForValue().get(getKey(key)))
                 .map(json -> gson.fromJson(json,AuthorizationRedisEntry.class))
                 .map(entry -> {
                     try {
@@ -67,7 +77,7 @@ public class RedisAuthorizationInfoMemory implements AuthorizationInfoMemory {
 
     @Override
     public String renew(String key) {
-        this.template.expire(key,configuration.getTimeout(), TimeUnit.MILLISECONDS);
+        this.template.expire(getKey(key),configuration.getTimeout(), TimeUnit.MILLISECONDS);
         return key;
     }
 }
